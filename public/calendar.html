@@ -2,7 +2,10 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -42,13 +45,20 @@
         font-family: "Noto Sans KR", system-ui, sans-serif;
         background: var(--bg);
         color: var(--ink);
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
+        touch-action: manipulation;
       }
 
       .page {
         padding: 28px 18px 80px;
         max-width: 720px;
         margin: 0 auto;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow: hidden;
       }
 
       header {
@@ -103,11 +113,18 @@
         flex: 1;
       }
 
+      button,
+      a {
+        color: var(--ink);
+        touch-action: manipulation;
+      }
+
       .panel {
         background: var(--surface);
         border: 1px solid var(--line);
         border-radius: var(--radius);
         padding: 16px;
+        overflow: hidden;
       }
 
       .panel.hidden {
@@ -229,6 +246,7 @@
         grid-template-rows: repeat(7, 12px);
         gap: 4px;
         overflow-x: auto;
+        overflow-y: hidden;
         padding-bottom: 4px;
       }
 
@@ -348,6 +366,21 @@
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
+      let lastTouchEnd = 0;
+      document.addEventListener("gesturestart", (event) => event.preventDefault());
+      document.addEventListener("gesturechange", (event) => event.preventDefault());
+      document.addEventListener("gestureend", (event) => event.preventDefault());
+      document.addEventListener(
+        "touchend",
+        (event) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+          }
+          lastTouchEnd = now;
+        },
+        { passive: false }
+      );
       const STORAGE_KEY = "todays-todos";
       const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
