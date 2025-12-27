@@ -574,8 +574,8 @@
 
       function formatMeta(item) {
         const parts = [];
-        if (item.time) parts.push(`시간 ${item.time}`);
-        if (item.memo) parts.push(`메모 ${item.memo}`);
+        if (item.time) parts.push(`${item.time}`);
+        if (item.memo) parts.push(`${item.memo}`);
         return parts.join(" · ");
       }
 
