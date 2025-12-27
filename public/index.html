@@ -2,7 +2,10 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -34,18 +37,22 @@
         box-sizing: border-box;
       }
 
+      html,
       body {
         margin: 0;
         font-family: "Noto Sans KR", system-ui, sans-serif;
         background: var(--bg);
         color: var(--ink);
-        min-height: 100vh;
+        height: 100%;
+        overflow: hidden;
       }
 
       .page {
         padding: 28px 18px 80px;
         max-width: 520px;
         margin: 0 auto;
+        height: 100%;
+        overflow: hidden;
       }
 
       header {
@@ -188,7 +195,7 @@
         padding: 10px 12px;
         border-radius: 12px;
         border: 1px solid var(--line);
-        font-size: 14px;
+        font-size: 16px;
         font-family: inherit;
         background: #ffffff;
       }
@@ -255,6 +262,11 @@
         height: 18px;
         display: block;
         fill: currentColor;
+      }
+
+      button,
+      a {
+        color: var(--ink);
       }
 
       .list {
