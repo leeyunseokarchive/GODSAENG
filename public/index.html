@@ -56,7 +56,6 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        gap: 18px;
         overflow: hidden;
       }
 
@@ -357,6 +356,50 @@
         color: var(--muted);
       }
 
+      .todo .save {
+        border: none;
+        background: var(--accent);
+        color: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .todo .cancel {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .todo .edit-fields {
+        display: grid;
+        gap: 8px;
+      }
+
+      .todo .edit-fields input {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        font-size: 14px;
+        font-family: inherit;
+        background: #ffffff;
+      }
+
+      .todo .edit-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
       .empty {
         font-size: 13px;
         color: var(--muted);
@@ -472,6 +515,7 @@
       const state = loadState();
       const openAdders = {};
       let selectedDate = getTodayKey();
+      let editingId = null;
       let activeUnsubscribe = null;
 
       function loadState() {
@@ -549,6 +593,9 @@
       function iconSvg(name) {
         if (name === "plus") {
           return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"/></svg>`;
+        }
+        if (name === "check") {
+          return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 16.2a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4l2.3 2.3 7.3-7.3a1 1 0 0 1 1.4 1.4l-8 8Z"/></svg>`;
         }
         if (name === "morning") {
           return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v1.06a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Zm6.36 2.64a1 1 0 0 1 0 1.41l-.75.75a1 1 0 1 1-1.41-1.41l.75-.75a1 1 0 0 1 1.41 0ZM5.8 8.8a1 1 0 0 1-1.41 0l-.75-.75a1 1 0 1 1 1.41-1.41l.75.75a1 1 0 0 1 0 1.41ZM12 9.5a4.5 4.5 0 0 1 4.5 4.5v1a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-1A4.5 4.5 0 0 1 12 9.5Zm8 9a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h16Z"/></svg>`;
@@ -630,6 +677,83 @@
           saveState();
           render();
         });
+
+        let content;
+        if (editingId === item.id) {
+          const editFields = document.createElement("div");
+          editFields.className = "edit-fields";
+
+          const titleInput = document.createElement("input");
+          titleInput.type = "text";
+          titleInput.value = item.title;
+          titleInput.placeholder = "투두 이름";
+
+          const row = document.createElement("div");
+          row.className = "edit-row";
+
+          const timeInput = document.createElement("input");
+          timeInput.type = "time";
+          timeInput.value = item.time || "";
+
+          const memoInput = document.createElement("input");
+          memoInput.type = "text";
+          memoInput.placeholder = "메모";
+          memoInput.value = item.memo || "";
+
+          row.appendChild(timeInput);
+          row.appendChild(memoInput);
+
+          editFields.appendChild(titleInput);
+          editFields.appendChild(row);
+
+          const commitEdit = () => {
+            const nextTitle = titleInput.value.trim();
+            if (!nextTitle) return;
+            item.title = nextTitle;
+            item.time = timeInput.value;
+            item.memo = memoInput.value.trim();
+            editingId = null;
+            saveState();
+            render();
+          };
+
+          editFields.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitEdit();
+            }
+          });
+
+          content = editFields;
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const save = document.createElement("button");
+          save.type = "button";
+          save.className = "save";
+          save.setAttribute("aria-label", "저장");
+          save.innerHTML = iconSvg("check");
+          save.addEventListener("click", commitEdit);
+
+          const cancel = document.createElement("button");
+          cancel.type = "button";
+          cancel.className = "cancel";
+          cancel.setAttribute("aria-label", "취소");
+          cancel.innerHTML = iconSvg("close");
+          cancel.addEventListener("click", () => {
+            editingId = null;
+            render();
+          });
+
+          actions.appendChild(save);
+          actions.appendChild(cancel);
+
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(content);
+          wrapper.appendChild(actions);
+          return wrapper;
+        }
 
         const label = document.createElement("label");
         const title = document.createElement("div");
@@ -718,6 +842,18 @@
         wrapper.appendChild(checkbox);
         wrapper.appendChild(label);
         wrapper.appendChild(actions);
+
+        wrapper.addEventListener("click", (event) => {
+          if (
+            event.target.closest("button") ||
+            event.target.closest("input") ||
+            event.target.tagName === "LABEL"
+          ) {
+            return;
+          }
+          editingId = item.id;
+          render();
+        });
 
         return wrapper;
       }
