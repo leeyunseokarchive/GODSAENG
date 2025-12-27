@@ -1,89 +1,840 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Todo" />
+    <title>GODSAENG Todo</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #ffffff;
+        --surface: #ffffff;
+        --ink: #111111;
+        --muted: #6a6a6a;
+        --line: #e5e5e5;
+        --accent: #111111;
+        --shadow: 0 22px 40px rgba(17, 17, 17, 0.08);
+        --radius: 18px;
+      }
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.7.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.7.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.7.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+      * {
+        box-sizing: border-box;
+      }
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+      body {
+        margin: 0;
+        font-family: "Noto Sans KR", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+      }
+
+      .page {
+        padding: 28px 18px 80px;
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 22px;
+      }
+
+      header .title {
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .date-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+
+      .date-row .nav-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .date-row .nav-btn {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .date-row .date-center {
+        display: grid;
+        gap: 2px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ink);
+        min-width: 130px;
+        text-align: center;
+      }
+
+      .date-row .date-center .today {
+        font-size: 11px;
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        min-height: 14px;
+      }
+
+      .date-row .date-center .today.hidden {
+        visibility: hidden;
+      }
+
+      .icon-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        color: var(--ink);
+        text-decoration: none;
+        margin-left: auto;
+      }
+
+      .sections {
+        display: grid;
+        gap: 16px;
+      }
+
+      .section {
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 16px 16px 6px;
+        border: 1px solid var(--line);
+      }
+
+      .section header {
+        margin: 0 0 12px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .section h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .section .range {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .section .add-toggle {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+      }
+
+      .section .adder {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .section .adder.hidden {
+        display: none;
+      }
+
+      .section .adder input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        font-size: 14px;
+        font-family: inherit;
+        background: #ffffff;
+      }
+
+      .section .adder input:focus {
+        outline: 2px solid rgba(27, 27, 27, 0.12);
+        border-color: rgba(27, 27, 27, 0.3);
+        background: #ffffff;
+      }
+
+      .section .adder .row {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        gap: 8px;
+      }
+
+      .section .adder .memo-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .section .adder .memo-group input {
+        flex: 1;
+      }
+
+      .section .adder button {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: none;
+        background: var(--accent);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 40px;
+        min-width: 40px;
+      }
+
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+
+      .period-icon {
+        width: 18px;
+        height: 18px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        padding-bottom: 10px;
+      }
+
+      .todo {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      .todo.checked {
+        opacity: 0.55;
+      }
+
+      .todo label {
+        display: grid;
+        gap: 6px;
+      }
+
+      .todo .title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+
+      .todo .meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .todo input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent);
+        margin-top: 4px;
+      }
+
+      .todo .actions {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .todo .move {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .todo .delete {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        color: var(--muted);
+      }
+
+      .empty {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 8px 2px 12px;
+      }
+
+      @media (max-width: 480px) {
+        .page {
+          padding: 24px 14px 80px;
+        }
+
+        .section .adder .row {
+          grid-template-columns: 1fr;
+        }
+
+        .date-row {
+          gap: 6px;
+        }
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .section {
+        animation: rise 0.5s ease both;
       }
     </style>
   </head>
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+    <main class="page">
+      <header>
+        <div class="title">TODO</div>
+        <div class="date-row">
+          <div class="nav-group">
+            <button class="nav-btn" id="date-prev" type="button" aria-label="이전 날짜">
+              ◀
+            </button>
+            <div class="date-center" id="date-center"></div>
+            <button class="nav-btn" id="date-next" type="button" aria-label="다음 날짜">
+              ▶
+            </button>
+          </div>
+          <a class="icon-link" href="calendar.html" aria-label="캘린더 보기">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z"
+              />
+            </svg>
+          </a>
+        </div>
+      </header>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+      <section class="sections" id="sections"></section>
+    </main>
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+      import {
+        getFirestore,
+        doc,
+        setDoc,
+        onSnapshot,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCngHRQF5RAA-_98Xfv08AXRfUZNB9bNRI",
+        authDomain: "swipetodo.firebaseapp.com",
+        projectId: "swipetodo",
+        storageBucket: "swipetodo.firebasestorage.app",
+        messagingSenderId: "245873687078",
+        appId: "1:245873687078:web:a9b6facdea2eb2587fc4e7",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const PERIODS = [
+        { id: "morning", label: "MORNING", range: "06-12", start: 6, end: 12 },
+        { id: "lunch", label: "LUNCH", range: "12-18", start: 12, end: 18 },
+        { id: "evening", label: "DINNER", range: "18-06", start: 18, end: 6 },
+      ];
+
+      const STORAGE_KEY = "todays-todos";
+
+      const dateCenter = document.getElementById("date-center");
+      const datePrev = document.getElementById("date-prev");
+      const dateNext = document.getElementById("date-next");
+      const sectionsEl = document.getElementById("sections");
+
+      const state = loadState();
+      const openAdders = {};
+      let selectedDate = getTodayKey();
+      let activeUnsubscribe = null;
+
+      function loadState() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const today = getTodayKey();
+        if (!raw) {
+          return { itemsByDate: { [today]: [] } };
         }
-      });
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.itemsByDate) {
+            return { itemsByDate: parsed.itemsByDate };
+          }
+          if (parsed.date && Array.isArray(parsed.items)) {
+            return { itemsByDate: { [parsed.date]: parsed.items } };
+          }
+          return { itemsByDate: { [today]: [] } };
+        } catch (error) {
+          return { itemsByDate: { [today]: [] } };
+        }
+      }
+
+      function saveState(dateKey = selectedDate, options = { remote: true }) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (options.remote) {
+          syncDateToRemote(dateKey);
+        }
+      }
+
+      function syncDateToRemote(dateKey) {
+        const items = getItemsForDate(dateKey);
+        setDoc(
+          doc(db, "todos", dateKey),
+          {
+            items,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        )
+          .catch((error) => console.warn("Firestore save failed", error));
+      }
+
+      function subscribeToDate(dateKey) {
+        if (activeUnsubscribe) activeUnsubscribe();
+        activeUnsubscribe = onSnapshot(doc(db, "todos", dateKey), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data() || {};
+          const items = Array.isArray(data.items) ? data.items : [];
+          state.itemsByDate[dateKey] = items;
+          saveState(dateKey, { remote: false });
+          render();
+        });
+      }
+
+      function createId() {
+        if (window.crypto && window.crypto.randomUUID) {
+          return window.crypto.randomUUID();
+        }
+        return `todo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function getTodayKey() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function formatDateLabel() {
+        const [year, month, day] = selectedDate.split("-");
+        const date = new Date(selectedDate);
+        const dayLabel = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"][
+          date.getDay()
+        ];
+        return `${year.slice(2)}.${month}.${day} ${dayLabel}`;
+      }
+
+      function iconSvg(name) {
+        if (name === "plus") {
+          return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"/></svg>`;
+        }
+        if (name === "morning") {
+          return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v1.06a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Zm6.36 2.64a1 1 0 0 1 0 1.41l-.75.75a1 1 0 1 1-1.41-1.41l.75-.75a1 1 0 0 1 1.41 0ZM5.8 8.8a1 1 0 0 1-1.41 0l-.75-.75a1 1 0 1 1 1.41-1.41l.75.75a1 1 0 0 1 0 1.41ZM12 9.5a4.5 4.5 0 0 1 4.5 4.5v1a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-1A4.5 4.5 0 0 1 12 9.5Zm8 9a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h16Z"/></svg>`;
+        }
+        if (name === "lunch") {
+          return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a1 1 0 0 1 1 1v1.1a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm7.8 2.9a1 1 0 0 1 0 1.4l-.78.78a1 1 0 1 1-1.41-1.41l.78-.78a1 1 0 0 1 1.41 0ZM6.4 6.3a1 1 0 0 1 1.41 0l.78.78a1 1 0 1 1-1.41 1.41l-.78-.78a1 1 0 0 1 0-1.41ZM4 12a1 1 0 0 1 1 1v.1a1 1 0 1 1-2 0V13a1 1 0 0 1 1-1Zm16 0a1 1 0 0 1 1 1v.1a1 1 0 1 1-2 0V13a1 1 0 0 1 1-1ZM12 9a4 4 0 0 1 4 4v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-1a4 4 0 0 1 4-4Zm8 9a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h16Z"/></svg>`;
+        }
+        if (name === "evening") {
+          return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 3a1 1 0 0 1 .92 1.4A7 7 0 0 0 16 7a7 7 0 0 0 7 7 1 1 0 0 1 .6 1.8A9 9 0 1 1 14.5 3Z"/></svg>`;
+        }
+        return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.2 6.2a1 1 0 0 1 1.4 0L12 10.6l4.4-4.4a1 1 0 1 1 1.4 1.4L13.4 12l4.4 4.4a1 1 0 0 1-1.4 1.4L12 13.4l-4.4 4.4a1 1 0 1 1-1.4-1.4L10.6 12 6.2 7.6a1 1 0 0 1 0-1.4Z"/></svg>`;
+      }
+
+      function isValidDateKey(value) {
+        if (!value) return false;
+        const date = new Date(value);
+        return !Number.isNaN(date.getTime());
+      }
+
+      function shiftSelectedDate(offsetDays) {
+        const date = new Date(selectedDate);
+        date.setDate(date.getDate() + offsetDays);
+        setSelectedDate(date.toISOString().slice(0, 10));
+      }
+
+      function getRelativeLabel() {
+        const selected = new Date(selectedDate);
+        const today = new Date();
+        selected.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((selected - today) / 86400000);
+        if (diffDays === -1) return "YESTERDAY";
+        if (diffDays === 0) return "TODAY";
+        if (diffDays === 1) return "TOMORROW";
+        return "-";
+      }
+
+      function getCurrentPeriodId() {
+        const hour = new Date().getHours();
+        if (hour >= 6 && hour < 12) return "morning";
+        if (hour >= 12 && hour < 18) return "lunch";
+        return "evening";
+      }
+
+      function getNextPeriodId(current) {
+        const index = PERIODS.findIndex((p) => p.id === current);
+        const next = PERIODS[(index + 1) % PERIODS.length];
+        return next.id;
+      }
+
+      function getPrevPeriodId(current) {
+        const index = PERIODS.findIndex((p) => p.id === current);
+        const prev = PERIODS[(index - 1 + PERIODS.length) % PERIODS.length];
+        return prev.id;
+      }
+
+      function shiftDateKey(dateKey, offsetDays) {
+        const date = new Date(dateKey);
+        date.setDate(date.getDate() + offsetDays);
+        return date.toISOString().slice(0, 10);
+      }
+
+      function formatMeta(item) {
+        const parts = [];
+        if (item.time) parts.push(`시간 ${item.time}`);
+        if (item.memo) parts.push(`메모 ${item.memo}`);
+        return parts.join(" · ");
+      }
+
+      function createTodoElement(item) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `todo${item.done ? " checked" : ""}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = item.done;
+        checkbox.addEventListener("change", () => {
+          item.done = checkbox.checked;
+          saveState();
+          render();
+        });
+
+        const label = document.createElement("label");
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = item.title;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = formatMeta(item);
+        if (!meta.textContent) {
+          meta.style.display = "none";
+        }
+
+        label.appendChild(title);
+        label.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const move = document.createElement("button");
+        move.type = "button";
+        move.className = "move";
+        move.setAttribute("aria-label", "다음 타임으로 이동");
+        move.textContent = "↧";
+        move.addEventListener("click", () => {
+          const currentDate = selectedDate;
+          const nextPeriod = getNextPeriodId(item.periodId);
+          const targetDate =
+            item.periodId === "evening" && nextPeriod === "morning"
+              ? shiftDateKey(currentDate, 1)
+              : currentDate;
+          const currentItems = getItemsForDate(currentDate);
+          state.itemsByDate[currentDate] = currentItems.filter(
+            (entry) => entry.id !== item.id
+          );
+          item.periodId = nextPeriod;
+          item.done = false;
+          getItemsForDate(targetDate).push(item);
+          saveState(currentDate);
+          if (targetDate !== currentDate) saveState(targetDate);
+          render();
+        });
+
+        const movePrev = document.createElement("button");
+        movePrev.type = "button";
+        movePrev.className = "move";
+        movePrev.setAttribute("aria-label", "이전 타임으로 이동");
+        movePrev.textContent = "↥";
+        movePrev.addEventListener("click", () => {
+          const currentDate = selectedDate;
+          const prevPeriod = getPrevPeriodId(item.periodId);
+          const targetDate =
+            item.periodId === "morning" && prevPeriod === "evening"
+              ? shiftDateKey(currentDate, -1)
+              : currentDate;
+          const currentItems = getItemsForDate(currentDate);
+          state.itemsByDate[currentDate] = currentItems.filter(
+            (entry) => entry.id !== item.id
+          );
+          item.periodId = prevPeriod;
+          item.done = false;
+          getItemsForDate(targetDate).push(item);
+          saveState(currentDate);
+          if (targetDate !== currentDate) saveState(targetDate);
+          render();
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete";
+        remove.setAttribute("aria-label", "투두 삭제");
+        remove.textContent = "✕";
+        remove.addEventListener("click", () => {
+          const items = getItemsForDate(selectedDate);
+          state.itemsByDate[selectedDate] = items.filter(
+            (entry) => entry.id !== item.id
+          );
+          saveState();
+          render();
+        });
+
+        actions.appendChild(movePrev);
+        actions.appendChild(move);
+        actions.appendChild(remove);
+
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
+        wrapper.appendChild(actions);
+
+        return wrapper;
+      }
+
+      function renderSection(period) {
+        const section = document.createElement("section");
+        section.className = "section";
+
+        const header = document.createElement("header");
+        const h2 = document.createElement("h2");
+        h2.innerHTML = `${iconSvg(period.id)}<span class="sr-only">${period.label}</span>`;
+        const range = document.createElement("span");
+        range.className = "range";
+        range.textContent = period.range;
+        h2.appendChild(range);
+        header.appendChild(h2);
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "add-toggle";
+        toggle.setAttribute(
+          "aria-label",
+          openAdders[period.id] ? "닫기" : "투두 추가"
+        );
+        toggle.innerHTML = openAdders[period.id] ? iconSvg("close") : iconSvg("plus");
+        toggle.addEventListener("click", () => {
+          const isOpen = !!openAdders[period.id];
+          Object.keys(openAdders).forEach((key) => {
+            openAdders[key] = false;
+          });
+          openAdders[period.id] = !isOpen;
+          render();
+        });
+        header.appendChild(toggle);
+
+        const adder = document.createElement("form");
+        adder.className = `adder${openAdders[period.id] ? "" : " hidden"}`;
+
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.placeholder = "NAME";
+        titleInput.required = true;
+        titleInput.autocomplete = "off";
+
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const timeInput = document.createElement("input");
+        timeInput.type = "time";
+        timeInput.placeholder = "TIME (optional)";
+
+        const memoGroup = document.createElement("div");
+        memoGroup.className = "memo-group";
+
+        const memoInput = document.createElement("input");
+        memoInput.type = "text";
+        memoInput.placeholder = "MEMO (optional)";
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.setAttribute("aria-label", "추가");
+        submit.innerHTML = iconSvg("plus");
+
+        memoGroup.appendChild(memoInput);
+        memoGroup.appendChild(submit);
+
+        row.appendChild(timeInput);
+        row.appendChild(memoGroup);
+
+        adder.appendChild(titleInput);
+        adder.appendChild(row);
+
+        adder.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const title = titleInput.value.trim();
+          if (!title) return;
+
+          const items = getItemsForDate(selectedDate);
+          items.push({
+            id: createId(),
+            title,
+            time: timeInput.value,
+            memo: memoInput.value.trim(),
+            periodId: period.id,
+            done: false,
+            createdAt: Date.now(),
+          });
+
+          titleInput.value = "";
+          timeInput.value = "";
+          memoInput.value = "";
+          titleInput.focus();
+
+          saveState();
+          render();
+        });
+
+        const list = document.createElement("div");
+        list.className = "list";
+
+        const items = getItemsForDate(selectedDate)
+          .filter((item) => item.periodId === period.id)
+          .sort((a, b) => {
+            if (a.done === b.done) return a.createdAt - b.createdAt;
+            return a.done ? 1 : -1;
+          });
+
+        if (items.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "-";
+          list.appendChild(empty);
+        } else {
+          items.forEach((item) => list.appendChild(createTodoElement(item)));
+        }
+
+        section.appendChild(header);
+        section.appendChild(adder);
+        section.appendChild(list);
+
+        return section;
+      }
+
+      function render() {
+        sectionsEl.innerHTML = "";
+        PERIODS.forEach((period) => {
+          sectionsEl.appendChild(renderSection(period));
+        });
+      }
+
+      function getItemsForDate(dateKey) {
+        if (!state.itemsByDate[dateKey]) {
+          state.itemsByDate[dateKey] = [];
+        }
+        return state.itemsByDate[dateKey];
+      }
+
+      function setSelectedDate(value) {
+        selectedDate = value;
+        const label = getRelativeLabel();
+        const todayClass = label === "-" ? "today hidden" : "today";
+        dateCenter.innerHTML = `<div class="${todayClass}">${label}</div><div>${formatDateLabel()}</div>`;
+        subscribeToDate(selectedDate);
+        render();
+      }
+
+      datePrev.addEventListener("click", () => shiftSelectedDate(-1));
+      dateNext.addEventListener("click", () => shiftSelectedDate(1));
+
+      const paramDate = new URLSearchParams(window.location.search).get("date");
+      if (isValidDateKey(paramDate)) {
+        setSelectedDate(paramDate);
+      } else {
+        setSelectedDate(getTodayKey());
+      }
+      render();
     </script>
   </body>
 </html>
