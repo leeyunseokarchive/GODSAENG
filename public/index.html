@@ -50,7 +50,7 @@
       }
 
       .page {
-        padding: 28px 18px 80px;
+        padding: 28px 18px 24px;
         max-width: 520px;
         margin: 0 auto;
         height: 100vh;
@@ -148,8 +148,115 @@
       .section {
         background: var(--surface);
         border-radius: var(--radius);
-        padding: 16px 16px 16px;
+        padding: 16px;
         border: 1px solid var(--line);
+        animation: rise 0.5s ease both;
+      }
+
+      .section.memo .memo-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .section.memo .memo-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+      }
+
+      .section.memo .memo-item .text {
+        flex: 1;
+        font-size: 14px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .section.memo .memo-item .delete {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+        color: var(--muted);
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+      }
+
+      .modal.hidden {
+        display: none;
+      }
+
+      .modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .modal-card {
+        position: relative;
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        width: min(320px, 90vw);
+        display: grid;
+        gap: 12px;
+        box-shadow: var(--shadow);
+      }
+
+      .modal-title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .modal-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .modal-actions button {
+        width: 100%;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #ffffff;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .modal-actions .danger {
+        background: var(--accent);
+        color: #ffffff;
+        border: none;
+      }
+
+      .modal-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .modal-field input {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        font-size: 16px;
+        font-family: inherit;
+        background: #ffffff;
       }
 
       .section header {
@@ -249,11 +356,28 @@
         min-width: 40px;
       }
 
-      .icon {
+      .icon,
+      .period-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-block;
+        fill: currentColor;
+        vertical-align: middle;
+      }
+
+      .pin-icon {
         width: 16px;
         height: 16px;
-        display: block;
-        fill: currentColor;
+        transform: none;
+      }
+
+      .fit-text {
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      input.fit-text {
+        text-overflow: clip;
       }
 
       .sr-only {
@@ -265,13 +389,6 @@
         overflow: hidden;
         clip: rect(0, 0, 0, 0);
         border: 0;
-      }
-
-      .period-icon {
-        width: 18px;
-        height: 18px;
-        display: block;
-        fill: currentColor;
       }
 
       button,
@@ -333,7 +450,22 @@
         align-items: center;
       }
 
+      .todo.checked .actions {
+        opacity: 1;
+      }
+
       .todo .move {
+        border: 1px solid var(--line);
+        background: #ffffff;
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .todo .pin {
         border: 1px solid var(--line);
         background: #ffffff;
         width: 28px;
@@ -408,7 +540,7 @@
 
       @media (max-width: 480px) {
         .page {
-          padding: 24px 14px 80px;
+          padding: 24px 14px 16px;
         }
 
         .section .adder .row {
@@ -431,9 +563,6 @@
         }
       }
 
-      .section {
-        animation: rise 0.5s ease both;
-      }
     </style>
   </head>
   <body>
@@ -442,26 +571,65 @@
         <div class="title">TODO</div>
         <div class="date-row">
           <div class="nav-group">
-            <button class="nav-btn" id="date-prev" type="button" aria-label="이전 날짜">
+            <button class="nav-btn" id="date-prev" type="button" aria-label="Previous date">
               ◀
             </button>
             <div class="date-center" id="date-center"></div>
-            <button class="nav-btn" id="date-next" type="button" aria-label="다음 날짜">
+            <button class="nav-btn" id="date-next" type="button" aria-label="Next date">
               ▶
             </button>
           </div>
-          <a class="icon-link" href="calendar.html" aria-label="캘린더 보기">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z"
-              />
-            </svg>
-          </a>
         </div>
       </header>
 
       <section class="sections" id="sections"></section>
     </main>
+
+    <div class="modal hidden" id="pin-action-modal" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-action="cancel"></div>
+      <div class="modal-card">
+        <div class="modal-title" id="pin-modal-title">PINNED ROUTINE</div>
+        <div class="modal-actions">
+          <button class="danger" data-action="all" id="pin-modal-all">
+            Delete All
+          </button>
+          <button data-action="future" id="pin-modal-future">
+            Delete from Today
+          </button>
+          <button data-action="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="todo-edit-modal" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-action="cancel"></div>
+      <div class="modal-card">
+        <div class="modal-title">EDIT TODO</div>
+        <div class="modal-field">
+          <input id="todo-edit-title" type="text" placeholder="NAME" />
+          <input id="todo-edit-time" type="time" />
+          <input id="todo-edit-memo" type="text" placeholder="MEMO (optional)" />
+        </div>
+        <div class="modal-actions">
+          <button class="danger" data-action="save">SAVE</button>
+          <button data-action="cancel">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal hidden" id="memo-edit-modal" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-action="cancel"></div>
+      <div class="modal-card">
+        <div class="modal-title">EDIT MEMO</div>
+        <div class="modal-field">
+          <input id="memo-edit-text" type="text" placeholder="MEMO" />
+        </div>
+        <div class="modal-actions">
+          <button class="danger" data-action="save">SAVE</button>
+          <button data-action="cancel">CANCEL</button>
+        </div>
+      </div>
+    </div>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
@@ -491,6 +659,10 @@
       document.addEventListener(
         "touchend",
         (event) => {
+          if (event.target.closest("input, textarea, [contenteditable='true']")) {
+            lastTouchEnd = Date.now();
+            return;
+          }
           const now = Date.now();
           if (now - lastTouchEnd <= 300) {
             event.preventDefault();
@@ -500,9 +672,9 @@
         { passive: false }
       );
       const PERIODS = [
-        { id: "morning", label: "MORNING", range: "06-12", start: 6, end: 12 },
-        { id: "lunch", label: "LUNCH", range: "12-18", start: 12, end: 18 },
-        { id: "evening", label: "DINNER", range: "18-06", start: 18, end: 6 },
+        { id: "morning", label: "MORNING", range: "06-12" },
+        { id: "lunch", label: "LUNCH", range: "12-18" },
+        { id: "evening", label: "DINNER", range: "18-06" },
       ];
 
       const STORAGE_KEY = "todays-todos";
@@ -511,30 +683,74 @@
       const datePrev = document.getElementById("date-prev");
       const dateNext = document.getElementById("date-next");
       const sectionsEl = document.getElementById("sections");
+      const pinActionModal = document.getElementById("pin-action-modal");
+      const pinModalTitle = document.getElementById("pin-modal-title");
+      const pinModalAll = document.getElementById("pin-modal-all");
+      const pinModalFuture = document.getElementById("pin-modal-future");
+      const todoEditModal = document.getElementById("todo-edit-modal");
+      const todoEditTitle = document.getElementById("todo-edit-title");
+      const todoEditTime = document.getElementById("todo-edit-time");
+      const todoEditMemo = document.getElementById("todo-edit-memo");
+      const memoEditModal = document.getElementById("memo-edit-modal");
+      const memoEditText = document.getElementById("memo-edit-text");
+
+      [todoEditTitle, todoEditMemo, memoEditText].forEach((input) => {
+        input.classList.add("fit-text");
+        input.dataset.fitMin = "12";
+        input.addEventListener("input", () => fitText(input, 12));
+      });
 
       const state = loadState();
       const openAdders = {};
+      let openMemoAdder = false;
       let selectedDate = getTodayKey();
-      let editingId = null;
       let activeUnsubscribe = null;
+      let activePinsUnsubscribe = null;
+      let activePinStatusUnsubscribe = null;
+      let activeMemoUnsubscribe = null;
 
       function loadState() {
         const raw = localStorage.getItem(STORAGE_KEY);
         const today = getTodayKey();
         if (!raw) {
-          return { itemsByDate: { [today]: [] } };
+          return {
+            itemsByDate: { [today]: [] },
+            pinnedItems: [],
+            pinStatusByDate: {},
+            memoItemsByDate: {},
+          };
         }
         try {
           const parsed = JSON.parse(raw);
           if (parsed.itemsByDate) {
-            return { itemsByDate: parsed.itemsByDate };
+            return {
+              itemsByDate: parsed.itemsByDate,
+              pinnedItems: parsed.pinnedItems || [],
+              pinStatusByDate: parsed.pinStatusByDate || {},
+              memoItemsByDate: parsed.memoItemsByDate || {},
+            };
           }
           if (parsed.date && Array.isArray(parsed.items)) {
-            return { itemsByDate: { [parsed.date]: parsed.items } };
+            return {
+              itemsByDate: { [parsed.date]: parsed.items },
+              pinnedItems: [],
+              pinStatusByDate: {},
+              memoItemsByDate: {},
+            };
           }
-          return { itemsByDate: { [today]: [] } };
+          return {
+            itemsByDate: { [today]: [] },
+            pinnedItems: [],
+            pinStatusByDate: {},
+            memoItemsByDate: {},
+          };
         } catch (error) {
-          return { itemsByDate: { [today]: [] } };
+          return {
+            itemsByDate: { [today]: [] },
+            pinnedItems: [],
+            pinStatusByDate: {},
+            memoItemsByDate: {},
+          };
         }
       }
 
@@ -542,6 +758,27 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         if (options.remote) {
           syncDateToRemote(dateKey);
+        }
+      }
+
+      function savePinsState(options = { remote: true }) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (options.remote) {
+          syncPinsToRemote();
+        }
+      }
+
+      function savePinStatus(dateKey = selectedDate, options = { remote: true }) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (options.remote) {
+          syncPinStatusToRemote(dateKey);
+        }
+      }
+
+      function saveMemoState(dateKey = selectedDate, options = { remote: true }) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (options.remote) {
+          syncMemoToRemote(dateKey);
         }
       }
 
@@ -558,6 +795,41 @@
           .catch((error) => console.warn("Firestore save failed", error));
       }
 
+      function syncPinsToRemote() {
+        setDoc(
+          doc(db, "pins", "list"),
+          {
+            items: state.pinnedItems,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        ).catch((error) => console.warn("Firestore pins save failed", error));
+      }
+
+      function syncPinStatusToRemote(dateKey) {
+        const status = state.pinStatusByDate[dateKey] || {};
+        setDoc(
+          doc(db, "pinStatus", dateKey),
+          {
+            status,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        ).catch((error) => console.warn("Firestore pin status save failed", error));
+      }
+
+      function syncMemoToRemote(dateKey) {
+        const items = state.memoItemsByDate[dateKey] || [];
+        setDoc(
+          doc(db, "memos", dateKey),
+          {
+            items,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        ).catch((error) => console.warn("Firestore memo save failed", error));
+      }
+
       function subscribeToDate(dateKey) {
         if (activeUnsubscribe) activeUnsubscribe();
         activeUnsubscribe = onSnapshot(doc(db, "todos", dateKey), (snapshot) => {
@@ -566,6 +838,43 @@
           const items = Array.isArray(data.items) ? data.items : [];
           state.itemsByDate[dateKey] = items;
           saveState(dateKey, { remote: false });
+          render();
+        });
+      }
+
+      function subscribePins() {
+        if (activePinsUnsubscribe) activePinsUnsubscribe();
+        activePinsUnsubscribe = onSnapshot(doc(db, "pins", "list"), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data() || {};
+          const items = Array.isArray(data.items) ? data.items : [];
+          state.pinnedItems = items;
+          savePinsState({ remote: false });
+          render();
+        });
+      }
+
+      function subscribePinStatus(dateKey) {
+        if (activePinStatusUnsubscribe) activePinStatusUnsubscribe();
+        activePinStatusUnsubscribe = onSnapshot(
+          doc(db, "pinStatus", dateKey),
+          (snapshot) => {
+            if (!snapshot.exists()) return;
+            const data = snapshot.data() || {};
+            state.pinStatusByDate[dateKey] = data.status || {};
+            savePinStatus(dateKey, { remote: false });
+            render();
+          }
+        );
+      }
+
+      function subscribeMemo(dateKey) {
+        if (activeMemoUnsubscribe) activeMemoUnsubscribe();
+        activeMemoUnsubscribe = onSnapshot(doc(db, "memos", dateKey), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data() || {};
+          state.memoItemsByDate[dateKey] = Array.isArray(data.items) ? data.items : [];
+          saveMemoState(dateKey, { remote: false });
           render();
         });
       }
@@ -590,12 +899,192 @@
         return `${year.slice(2)}.${month}.${day} ${dayLabel}`;
       }
 
+      function toDateKey(value) {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        return date.toISOString().slice(0, 10);
+      }
+
+      function fitText(element, minSize = 10) {
+        if (!element) return;
+        const maxSize =
+          Number(element.dataset.fitMax) ||
+          parseFloat(window.getComputedStyle(element).fontSize) ||
+          14;
+        let size = maxSize;
+        element.style.fontSize = `${size}px`;
+        while (element.scrollWidth > element.clientWidth && size > minSize) {
+          size -= 0.5;
+          element.style.fontSize = `${size}px`;
+        }
+      }
+
+      function fitAllText() {
+        document.querySelectorAll(".fit-text").forEach((element) => {
+          const min = Number(element.dataset.fitMin) || 10;
+          fitText(element, min);
+        });
+      }
+
+      function openPinActionModal({ title, allLabel, futureLabel }) {
+        return new Promise((resolve) => {
+          pinModalTitle.textContent = title;
+          pinModalAll.textContent = allLabel;
+          pinModalFuture.textContent = futureLabel;
+          pinActionModal.classList.remove("hidden");
+
+          const handleClick = (event) => {
+            const action = event.target.closest("button, .modal-backdrop")?.dataset
+              ?.action;
+            if (!action) return;
+            cleanup();
+            resolve(action);
+          };
+
+          const handleKey = (event) => {
+            if (event.key === "Escape") {
+              cleanup();
+              resolve("cancel");
+            }
+          };
+
+          const cleanup = () => {
+            pinActionModal.classList.add("hidden");
+            pinActionModal.removeEventListener("click", handleClick);
+            document.removeEventListener("keydown", handleKey);
+          };
+
+          pinActionModal.addEventListener("click", handleClick);
+          document.addEventListener("keydown", handleKey);
+        });
+      }
+
+      function openTodoEditModal(item) {
+        return new Promise((resolve) => {
+          todoEditTitle.value = item.title || "";
+          todoEditTime.value = item.time || "";
+          todoEditMemo.value = item.memo || "";
+          todoEditTitle.classList.add("fit-text");
+          todoEditMemo.classList.add("fit-text");
+          todoEditModal.classList.remove("hidden");
+          todoEditTitle.focus();
+          fitText(todoEditTitle, 10);
+          fitText(todoEditMemo, 10);
+
+          const handleClick = (event) => {
+            const action = event.target.closest("button, .modal-backdrop")?.dataset
+              ?.action;
+            if (!action) return;
+            if (action === "save") {
+              const title = todoEditTitle.value.trim();
+              if (!title) return;
+              item.title = title;
+              item.time = todoEditTime.value;
+              item.memo = todoEditMemo.value.trim();
+              cleanup();
+              resolve("save");
+              return;
+            }
+            cleanup();
+            resolve("cancel");
+          };
+
+          const handleKey = (event) => {
+            if (event.key === "Escape") {
+              cleanup();
+              resolve("cancel");
+            }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              const title = todoEditTitle.value.trim();
+              if (!title) return;
+              item.title = title;
+              item.time = todoEditTime.value;
+              item.memo = todoEditMemo.value.trim();
+              cleanup();
+              resolve("save");
+            }
+          };
+
+          const cleanup = () => {
+            todoEditModal.classList.add("hidden");
+            todoEditModal.removeEventListener("click", handleClick);
+            document.removeEventListener("keydown", handleKey);
+          };
+
+          todoEditModal.addEventListener("click", handleClick);
+          document.addEventListener("keydown", handleKey);
+        });
+      }
+
+      function openMemoEditModal(memo) {
+        return new Promise((resolve) => {
+          memoEditText.value = memo.text || "";
+          memoEditModal.classList.remove("hidden");
+          memoEditText.focus();
+          fitText(memoEditText, 10);
+
+          const handleClick = (event) => {
+            const action = event.target.closest("button, .modal-backdrop")?.dataset
+              ?.action;
+            if (!action) return;
+            if (action === "save") {
+              const text = memoEditText.value.trim();
+              if (!text) return;
+              memo.text = text;
+              cleanup();
+              resolve("save");
+              return;
+            }
+            cleanup();
+            resolve("cancel");
+          };
+
+          const handleKey = (event) => {
+            if (event.key === "Escape") {
+              cleanup();
+              resolve("cancel");
+            }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              const text = memoEditText.value.trim();
+              if (!text) return;
+              memo.text = text;
+              cleanup();
+              resolve("save");
+            }
+          };
+
+          const cleanup = () => {
+            memoEditModal.classList.add("hidden");
+            memoEditModal.removeEventListener("click", handleClick);
+            document.removeEventListener("keydown", handleKey);
+          };
+
+          memoEditModal.addEventListener("click", handleClick);
+          document.addEventListener("keydown", handleKey);
+        });
+      }
+
       function iconSvg(name) {
         if (name === "plus") {
           return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"/></svg>`;
         }
         if (name === "check") {
           return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 16.2a1 1 0 0 1-1.4 0l-3-3a1 1 0 1 1 1.4-1.4l2.3 2.3 7.3-7.3a1 1 0 0 1 1.4 1.4l-8 8Z"/></svg>`;
+        }
+        if (name === "pin") {
+          return `<svg class="period-icon pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3a1 1 0 0 1 1 1v3.59l2.7 2.7a1 1 0 0 1-.7 1.71H13v6a1 1 0 0 1-2 0v-6H7a1 1 0 0 1-.7-1.71L9 7.59V4a1 1 0 0 1 1-1h4Z"/></svg>`;
+        }
+        if (name === "pin-off") {
+          return `<svg class="icon pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3a1 1 0 0 1 1 1v3.59l2.7 2.7a1 1 0 0 1-.7 1.71H13v6a1 1 0 0 1-2 0v-6H7a1 1 0 0 1-.7-1.71L9 7.59V4a1 1 0 0 1 1-1h4Z"/><path d="M6 21a1 1 0 0 1-1-1v-1h14v1a1 1 0 0 1-1 1H6Z"/></svg>`;
+        }
+        if (name === "pin-on") {
+          return `<svg class="icon pin-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3a1 1 0 0 1 1 1v3.59l2.7 2.7a1 1 0 0 1-.7 1.71H13v6a1 1 0 0 1-2 0v-6H7a1 1 0 0 1-.7-1.71L9 7.59V4a1 1 0 0 1 1-1h4Z"/><path d="M6 21a1 1 0 0 1-1-1v-1h14v1a1 1 0 0 1-1 1H6Z"/></svg>`;
+        }
+        if (name === "pencil") {
+          return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.6 3.9a1.5 1.5 0 0 1 2.1 0l2.4 2.4a1.5 1.5 0 0 1 0 2.1L9.3 19.2 4 20.5a1 1 0 0 1-1.2-1.2l1.3-5.3 10.5-10.1Z"/><path d="M13.5 6.9 17.1 10.5 18.9 8.7 15.3 5.1 13.5 6.9Z"/></svg>`;
         }
         if (name === "morning") {
           return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v1.06a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Zm6.36 2.64a1 1 0 0 1 0 1.41l-.75.75a1 1 0 1 1-1.41-1.41l.75-.75a1 1 0 0 1 1.41 0ZM5.8 8.8a1 1 0 0 1-1.41 0l-.75-.75a1 1 0 1 1 1.41-1.41l.75.75a1 1 0 0 1 0 1.41ZM12 9.5a4.5 4.5 0 0 1 4.5 4.5v1a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-1A4.5 4.5 0 0 1 12 9.5Zm8 9a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h16Z"/></svg>`;
@@ -633,13 +1122,6 @@
         return "-";
       }
 
-      function getCurrentPeriodId() {
-        const hour = new Date().getHours();
-        if (hour >= 6 && hour < 12) return "morning";
-        if (hour >= 12 && hour < 18) return "lunch";
-        return "evening";
-      }
-
       function getNextPeriodId(current) {
         const index = PERIODS.findIndex((p) => p.id === current);
         const next = PERIODS[(index + 1) % PERIODS.length];
@@ -665,100 +1147,102 @@
         return parts.join(" · ");
       }
 
+      function isPinVisible(pin, dateKey) {
+        const createdKey = toDateKey(pin.createdAt);
+        const deletedKey = toDateKey(pin.deletedAt);
+        const createdOk = !createdKey || createdKey <= dateKey;
+        const deletedOk = !deletedKey || deletedKey > dateKey;
+        return createdOk && deletedOk;
+      }
+
+      function getPinnedForPeriod(periodId) {
+        return state.pinnedItems
+          .filter((pin) => pin.periodId === periodId && isPinVisible(pin, selectedDate))
+          .slice()
+          .sort((a, b) => a.createdAt - b.createdAt)
+          .map((pin) => ({
+            pinned: true,
+            pinId: pin.id,
+            title: pin.title,
+            time: pin.time,
+            memo: pin.memo,
+            periodId: pin.periodId,
+            createdAt: pin.createdAt,
+          }));
+      }
+
+      function updatePinStatus(pinId, done) {
+        const nextStatus = { ...(state.pinStatusByDate[selectedDate] || {}) };
+        if (done) {
+          nextStatus[pinId] = true;
+        } else {
+          delete nextStatus[pinId];
+        }
+        state.pinStatusByDate[selectedDate] = nextStatus;
+        savePinStatus();
+        render();
+      }
+
+      function applyPinDelete(pin, mode) {
+        if (mode === "all") {
+          state.pinnedItems = state.pinnedItems.filter((entry) => entry.id !== pin.id);
+          Object.keys(state.pinStatusByDate || {}).forEach((dateKey) => {
+            if (state.pinStatusByDate[dateKey]) {
+              delete state.pinStatusByDate[dateKey][pin.id];
+            }
+          });
+          savePinStatus();
+        } else if (mode === "future") {
+          pin.deletedAt = selectedDate;
+        }
+        savePinsState();
+        render();
+      }
+
+      function applyPinMove(pin, targetPeriodId, mode) {
+        if (mode === "all") {
+          pin.periodId = targetPeriodId;
+        } else if (mode === "future") {
+          pin.deletedAt = selectedDate;
+          state.pinnedItems.push({
+            id: createId(),
+            title: pin.title,
+            time: pin.time,
+            memo: pin.memo,
+            periodId: targetPeriodId,
+            createdAt: selectedDate,
+          });
+        }
+        savePinsState();
+        render();
+      }
+
       function createTodoElement(item) {
+        const isPinned = !!item.pinned;
+        const pinStatus = state.pinStatusByDate[selectedDate] || {};
         const wrapper = document.createElement("div");
-        wrapper.className = `todo${item.done ? " checked" : ""}`;
+        const isDone = isPinned ? !!pinStatus[item.pinId] : item.done;
+        wrapper.className = `todo${isDone ? " checked" : ""}`;
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
-        checkbox.checked = item.done;
+        checkbox.checked = isDone;
         checkbox.addEventListener("change", () => {
+          if (isPinned) {
+            updatePinStatus(item.pinId, checkbox.checked);
+            return;
+          }
           item.done = checkbox.checked;
           saveState();
           render();
         });
 
-        let content;
-        if (editingId === item.id) {
-          const editFields = document.createElement("div");
-          editFields.className = "edit-fields";
-
-          const titleInput = document.createElement("input");
-          titleInput.type = "text";
-          titleInput.value = item.title;
-          titleInput.placeholder = "투두 이름";
-
-          const row = document.createElement("div");
-          row.className = "edit-row";
-
-          const timeInput = document.createElement("input");
-          timeInput.type = "time";
-          timeInput.value = item.time || "";
-
-          const memoInput = document.createElement("input");
-          memoInput.type = "text";
-          memoInput.placeholder = "메모";
-          memoInput.value = item.memo || "";
-
-          row.appendChild(timeInput);
-          row.appendChild(memoInput);
-
-          editFields.appendChild(titleInput);
-          editFields.appendChild(row);
-
-          const commitEdit = () => {
-            const nextTitle = titleInput.value.trim();
-            if (!nextTitle) return;
-            item.title = nextTitle;
-            item.time = timeInput.value;
-            item.memo = memoInput.value.trim();
-            editingId = null;
-            saveState();
-            render();
-          };
-
-          editFields.addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              commitEdit();
-            }
-          });
-
-          content = editFields;
-
-          const actions = document.createElement("div");
-          actions.className = "actions";
-
-          const save = document.createElement("button");
-          save.type = "button";
-          save.className = "save";
-          save.setAttribute("aria-label", "저장");
-          save.innerHTML = iconSvg("check");
-          save.addEventListener("click", commitEdit);
-
-          const cancel = document.createElement("button");
-          cancel.type = "button";
-          cancel.className = "cancel";
-          cancel.setAttribute("aria-label", "취소");
-          cancel.innerHTML = iconSvg("close");
-          cancel.addEventListener("click", () => {
-            editingId = null;
-            render();
-          });
-
-          actions.appendChild(save);
-          actions.appendChild(cancel);
-
-          wrapper.appendChild(checkbox);
-          wrapper.appendChild(content);
-          wrapper.appendChild(actions);
-          return wrapper;
-        }
-
         const label = document.createElement("label");
         const title = document.createElement("div");
         title.className = "title";
         title.textContent = item.title;
+        title.classList.add("fit-text");
+        title.dataset.fitMin = "10";
 
         const meta = document.createElement("div");
         meta.className = "meta";
@@ -766,6 +1250,8 @@
         if (!meta.textContent) {
           meta.style.display = "none";
         }
+        meta.classList.add("fit-text");
+        meta.dataset.fitMin = "10";
 
         label.appendChild(title);
         label.appendChild(meta);
@@ -773,12 +1259,77 @@
         const actions = document.createElement("div");
         actions.className = "actions";
 
+        const pinButton = document.createElement("button");
+        pinButton.type = "button";
+        pinButton.className = "pin";
+        pinButton.setAttribute("aria-label", isPinned ? "Unpin" : "Pin");
+        pinButton.innerHTML = isPinned ? iconSvg("pin-on") : iconSvg("pin");
+        pinButton.addEventListener("click", () => {
+          const currentDate = selectedDate;
+          if (isPinned) {
+            const pin = state.pinnedItems.find((entry) => entry.id === item.pinId);
+            if (!pin) return;
+            const pinnedDone = !!(state.pinStatusByDate[currentDate] || {})[pin.id];
+            pin.deletedAt = currentDate;
+            const items = getItemsForDate(currentDate);
+            items.push({
+              id: createId(),
+              title: pin.title,
+              time: pin.time,
+              memo: pin.memo,
+              periodId: pin.periodId,
+              done: pinnedDone,
+              createdAt: Date.now(),
+            });
+            savePinsState();
+            saveState(currentDate);
+            render();
+            return;
+          }
+          const pinId = createId();
+          const nextPin = {
+            id: pinId,
+            title: item.title,
+            time: item.time,
+            memo: item.memo,
+            periodId: item.periodId,
+            createdAt: currentDate,
+          };
+          state.pinnedItems.push(nextPin);
+          state.itemsByDate[currentDate] = getItemsForDate(currentDate).filter(
+            (entry) => entry.id !== item.id
+          );
+          if (item.done) {
+            const nextStatus = { ...(state.pinStatusByDate[currentDate] || {}) };
+            nextStatus[pinId] = true;
+            state.pinStatusByDate[currentDate] = nextStatus;
+            savePinStatus(currentDate);
+          }
+          saveState(currentDate);
+          savePinsState();
+          render();
+        });
+        actions.appendChild(pinButton);
+
         const move = document.createElement("button");
         move.type = "button";
         move.className = "move";
-        move.setAttribute("aria-label", "다음 타임으로 이동");
+        move.setAttribute("aria-label", "Move to next time");
         move.textContent = "↧";
-        move.addEventListener("click", () => {
+        move.addEventListener("click", async () => {
+          if (isPinned) {
+            const pin = state.pinnedItems.find((entry) => entry.id === item.pinId);
+            if (!pin) return;
+            const action = await openPinActionModal({
+              title: "MOVE PINNED ROUTINE",
+              allLabel: "Move for all dates",
+              futureLabel: "Move from today",
+            });
+            if (action === "cancel") return;
+            const targetPeriod = getNextPeriodId(pin.periodId);
+            applyPinMove(pin, targetPeriod, action);
+            return;
+          }
           const currentDate = selectedDate;
           const nextPeriod = getNextPeriodId(item.periodId);
           const targetDate =
@@ -800,9 +1351,22 @@
         const movePrev = document.createElement("button");
         movePrev.type = "button";
         movePrev.className = "move";
-        movePrev.setAttribute("aria-label", "이전 타임으로 이동");
+        movePrev.setAttribute("aria-label", "Move to previous time");
         movePrev.textContent = "↥";
-        movePrev.addEventListener("click", () => {
+        movePrev.addEventListener("click", async () => {
+          if (isPinned) {
+            const pin = state.pinnedItems.find((entry) => entry.id === item.pinId);
+            if (!pin) return;
+            const action = await openPinActionModal({
+              title: "MOVE PINNED ROUTINE",
+              allLabel: "Move for all dates",
+              futureLabel: "Move from today",
+            });
+            if (action === "cancel") return;
+            const targetPeriod = getPrevPeriodId(pin.periodId);
+            applyPinMove(pin, targetPeriod, action);
+            return;
+          }
           const currentDate = selectedDate;
           const prevPeriod = getPrevPeriodId(item.periodId);
           const targetDate =
@@ -824,9 +1388,21 @@
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "delete";
-        remove.setAttribute("aria-label", "투두 삭제");
+        remove.setAttribute("aria-label", "Delete todo");
         remove.textContent = "✕";
-        remove.addEventListener("click", () => {
+        remove.addEventListener("click", async () => {
+          if (isPinned) {
+            const pin = state.pinnedItems.find((entry) => entry.id === item.pinId);
+            if (!pin) return;
+            const action = await openPinActionModal({
+              title: "DELETE PINNED ROUTINE",
+              allLabel: "Delete for all dates",
+              futureLabel: "Delete from today",
+            });
+            if (action === "cancel") return;
+            applyPinDelete(pin, action);
+            return;
+          }
           const items = getItemsForDate(selectedDate);
           state.itemsByDate[selectedDate] = items.filter(
             (entry) => entry.id !== item.id
@@ -851,8 +1427,20 @@
           ) {
             return;
           }
-          editingId = item.id;
-          render();
+          const targetItem = isPinned
+            ? state.pinnedItems.find((entry) => entry.id === item.pinId)
+            : item;
+          if (!targetItem) return;
+          openTodoEditModal(targetItem).then((action) => {
+            if (action === "save") {
+              if (isPinned) {
+                savePinsState();
+              } else {
+                saveState();
+              }
+              render();
+            }
+          });
         });
 
         return wrapper;
@@ -876,7 +1464,7 @@
         toggle.className = "add-toggle";
         toggle.setAttribute(
           "aria-label",
-          openAdders[period.id] ? "닫기" : "투두 추가"
+          openAdders[period.id] ? "Close" : "Add todo"
         );
         toggle.innerHTML = openAdders[period.id] ? iconSvg("close") : iconSvg("plus");
         toggle.addEventListener("click", () => {
@@ -897,6 +1485,9 @@
         titleInput.placeholder = "NAME";
         titleInput.required = true;
         titleInput.autocomplete = "off";
+        titleInput.classList.add("fit-text");
+        titleInput.dataset.fitMin = "12";
+        titleInput.addEventListener("input", () => fitText(titleInput, 12));
 
         const row = document.createElement("div");
         row.className = "row";
@@ -911,10 +1502,13 @@
         const memoInput = document.createElement("input");
         memoInput.type = "text";
         memoInput.placeholder = "MEMO (optional)";
+        memoInput.classList.add("fit-text");
+        memoInput.dataset.fitMin = "12";
+        memoInput.addEventListener("input", () => fitText(memoInput, 12));
 
         const submit = document.createElement("button");
         submit.type = "submit";
-        submit.setAttribute("aria-label", "추가");
+        submit.setAttribute("aria-label", "Add");
         submit.innerHTML = iconSvg("plus");
 
         memoGroup.appendChild(memoInput);
@@ -954,6 +1548,7 @@
         const list = document.createElement("div");
         list.className = "list";
 
+        const pinnedItems = getPinnedForPeriod(period.id);
         const items = getItemsForDate(selectedDate)
           .filter((item) => item.periodId === period.id)
           .sort((a, b) => {
@@ -961,13 +1556,121 @@
             return a.done ? 1 : -1;
           });
 
+        const merged = [...pinnedItems, ...items];
+
+        if (merged.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "-";
+          list.appendChild(empty);
+        } else {
+          merged.forEach((item) => list.appendChild(createTodoElement(item)));
+        }
+
+        section.appendChild(header);
+        section.appendChild(adder);
+        section.appendChild(list);
+
+        return section;
+      }
+
+      function renderDailyMemoSection() {
+        const section = document.createElement("section");
+        section.className = "section memo";
+
+        const header = document.createElement("header");
+        const h2 = document.createElement("h2");
+        h2.innerHTML = `${iconSvg("pencil")}<span class="range">MEMO</span>`;
+        header.appendChild(h2);
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "add-toggle";
+        toggle.setAttribute("aria-label", openMemoAdder ? "Close" : "Add memo");
+        toggle.innerHTML = openMemoAdder ? iconSvg("close") : iconSvg("plus");
+        toggle.addEventListener("click", () => {
+          openMemoAdder = !openMemoAdder;
+          render();
+        });
+        header.appendChild(toggle);
+
+        const adder = document.createElement("form");
+        adder.className = `adder${openMemoAdder ? "" : " hidden"}`;
+
+        const memoInput = document.createElement("input");
+        memoInput.type = "text";
+        memoInput.placeholder = "Say something...";
+        memoInput.classList.add("fit-text");
+        memoInput.dataset.fitMin = "12";
+        memoInput.addEventListener("input", () => fitText(memoInput, 12));
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.setAttribute("aria-label", "Add");
+        submit.innerHTML = iconSvg("plus");
+
+        adder.appendChild(memoInput);
+        adder.appendChild(submit);
+
+        adder.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const text = memoInput.value.trim();
+          if (!text) return;
+          const items = state.memoItemsByDate[selectedDate] || [];
+          items.push({ id: createId(), text, createdAt: Date.now() });
+          state.memoItemsByDate[selectedDate] = items;
+          memoInput.value = "";
+          memoInput.focus();
+          saveMemoState();
+          render();
+        });
+
+        const list = document.createElement("div");
+        list.className = "memo-list";
+        const items = state.memoItemsByDate[selectedDate] || [];
         if (items.length === 0) {
           const empty = document.createElement("div");
           empty.className = "empty";
           empty.textContent = "-";
           list.appendChild(empty);
         } else {
-          items.forEach((item) => list.appendChild(createTodoElement(item)));
+          items.forEach((memo) => {
+            const row = document.createElement("div");
+            row.className = "memo-item";
+
+            const text = document.createElement("div");
+            text.className = "text fit-text";
+            text.dataset.fitMin = "10";
+            text.textContent = memo.text;
+
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "delete";
+            remove.setAttribute("aria-label", "Delete memo");
+            remove.textContent = "✕";
+            remove.addEventListener("click", () => {
+              if (!window.confirm("Delete this memo?")) return;
+              state.memoItemsByDate[selectedDate] = items.filter(
+                (entry) => entry.id !== memo.id
+              );
+              saveMemoState();
+              render();
+            });
+
+            row.appendChild(text);
+            row.appendChild(remove);
+            list.appendChild(row);
+
+            row.addEventListener("click", (event) => {
+              if (event.target.closest("button")) return;
+              openMemoEditModal(memo).then((action) => {
+                if (action === "save") {
+                  saveMemoState();
+                  render();
+                }
+              });
+            });
+          });
         }
 
         section.appendChild(header);
@@ -982,6 +1685,8 @@
         PERIODS.forEach((period) => {
           sectionsEl.appendChild(renderSection(period));
         });
+        sectionsEl.appendChild(renderDailyMemoSection());
+        fitAllText();
       }
 
       function getItemsForDate(dateKey) {
@@ -997,11 +1702,14 @@
         const todayClass = label === "-" ? "today hidden" : "today";
         dateCenter.innerHTML = `<div class="${todayClass}">${label}</div><div>${formatDateLabel()}</div>`;
         subscribeToDate(selectedDate);
+        subscribePinStatus(selectedDate);
+        subscribeMemo(selectedDate);
         render();
       }
 
       datePrev.addEventListener("click", () => shiftSelectedDate(-1));
       dateNext.addEventListener("click", () => shiftSelectedDate(1));
+      window.addEventListener("resize", fitAllText);
 
       const paramDate = new URLSearchParams(window.location.search).get("date");
       if (isValidDateKey(paramDate)) {
@@ -1009,6 +1717,7 @@
       } else {
         setSelectedDate(getTodayKey());
       }
+      subscribePins();
       render();
     </script>
   </body>
