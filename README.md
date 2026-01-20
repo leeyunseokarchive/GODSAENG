@@ -44,12 +44,27 @@
 ├── firestore.indexes.json
 ├── public
 │   ├── index.html
-│   ├── calendar.html
 │   ├── manifest.json
-│   └── icons
-│       ├── apple-touch-icon.png
-│       ├── icon-192.png
-│       └── icon-512.png
+│   ├── icons
+│   │   ├── apple-touch-icon.png
+│   │   ├── icon-192.png
+│   │   └── icon-512.png
+│   └── splash
+│       ├── splash-640x1136.png
+│       ├── splash-750x1334.png
+│       ├── splash-828x1792.png
+│       ├── splash-1125x2436.png
+│       ├── splash-1170x2532.png
+│       ├── splash-1179x2556.png
+│       ├── splash-1242x2208.png
+│       ├── splash-1242x2688.png
+│       ├── splash-1284x2778.png
+│       ├── splash-1290x2796.png
+│       ├── splash-1536x2048.png
+│       ├── splash-1668x2224.png
+│       ├── splash-1668x2388.png
+│       ├── splash-2048x2732.png
+│       └── (landscape variants)
 ├── logo.png
 └── README.md
 ```
@@ -57,13 +72,18 @@
 ---
 
 ## ✨ 주요 기능  
-- 아침/점심/저녁 타임별 투두 관리  
-- 빠른 투두 추가 (시간/메모 선택)  
-- 체크 시 하단 이동 및 반투명 처리  
-- 타임 이동 (이전/다음) + 날짜 경계 이동  
-- 날짜 이동 및 캘린더(월/년) 진행도 시각화  
-- iOS 홈 화면 추가 시 앱처럼 실행되는 PWA 구성  
-- Firebase Firestore 기반 다중 디바이스 동기화  
+- 아침/점심/저녁 타임별 투두 관리
+- 빠른 투두 추가 (시간/메모 선택)
+- 체크 시 하단 이동 및 반투명 처리
+- 타임 이동 (이전/다음) + 날짜 경계 이동
+- **고정 루틴(핀) 기능**: 선택한 시점부터 해당 타임에 고정
+- 고정 루틴 이동/삭제 시 **모든 시점/오늘만/이후만** 선택
+- 날짜 이동 및 월간 캘린더 오버레이
+- 날짜별 투두 미리보기(최대 3개)
+- 메모 리스트 추가/삭제/수정 (날짜별)
+- iOS 홈 화면 추가 시 앱처럼 실행되는 PWA 구성
+- iPhone/iPad 전기종 스플래시 화면 적용
+- Firebase Firestore 기반 다중 디바이스 동기화
 
 ---
 
