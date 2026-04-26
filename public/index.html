@@ -175,7 +175,22 @@
         background: #ffffff;
         color: var(--ink);
         text-decoration: none;
+      }
+
+      .date-row .view-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         margin-left: auto;
+      }
+
+      .date-row .nav-group.hidden {
+        display: none;
+      }
+
+      .icon-link.is-disabled {
+        opacity: 0.4;
+        pointer-events: none;
       }
 
       .sections {
@@ -541,6 +556,21 @@
         opacity: 0.55;
       }
 
+      .todo.is-draggable {
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .todo.is-dragging {
+        cursor: grabbing;
+        opacity: 0.35;
+      }
+
+      .todo.drag-over {
+        border-color: rgba(27, 27, 27, 0.6);
+        transform: translateY(-2px);
+      }
+
       .todo label {
         display: grid;
         gap: 6px;
@@ -693,7 +723,7 @@
       <header>
         <div class="title">TODO</div>
         <div class="date-row">
-          <div class="nav-group">
+          <div class="nav-group" id="date-nav-group">
             <button class="nav-btn" id="date-prev" type="button" aria-label="Previous date">
               ◀
             </button>
@@ -702,13 +732,20 @@
               ▶
             </button>
           </div>
-          <button class="icon-link" id="calendar-open" type="button" aria-label="Open calendar">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z"
-              />
-            </svg>
-          </button>
+          <div class="view-group">
+            <button class="icon-link" id="view-toggle" type="button" aria-label="Open dated todo">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z" />
+              </svg>
+            </button>
+            <button class="icon-link" id="calendar-open" type="button" aria-label="Open calendar">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -782,6 +819,22 @@
       </div>
     </div>
 
+    <div class="modal hidden" id="dump-edit-modal" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-action="cancel"></div>
+      <div class="modal-card">
+        <div class="modal-title">EDIT TODO</div>
+        <div class="modal-field">
+          <input id="dump-edit-title" type="text" placeholder="NAME" />
+          <input id="dump-edit-time" type="time" />
+          <input id="dump-edit-memo" type="text" placeholder="MEMO (optional)" />
+        </div>
+        <div class="modal-actions">
+          <button class="danger" data-action="save">Save</button>
+          <button data-action="cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
       import {
@@ -833,6 +886,8 @@
       const dateCenter = document.getElementById("date-center");
       const datePrev = document.getElementById("date-prev");
       const dateNext = document.getElementById("date-next");
+      const dateNavGroup = document.getElementById("date-nav-group");
+      const viewToggle = document.getElementById("view-toggle");
       const sectionsEl = document.getElementById("sections");
       const titleEl = document.querySelector("header .title");
       const calendarOpen = document.getElementById("calendar-open");
@@ -852,8 +907,12 @@
       const todoEditMemo = document.getElementById("todo-edit-memo");
       const memoEditModal = document.getElementById("memo-edit-modal");
       const memoEditText = document.getElementById("memo-edit-text");
+      const dumpEditModal = document.getElementById("dump-edit-modal");
+      const dumpEditTitle = document.getElementById("dump-edit-title");
+      const dumpEditTime = document.getElementById("dump-edit-time");
+      const dumpEditMemo = document.getElementById("dump-edit-memo");
 
-      [todoEditTitle, todoEditMemo, memoEditText].forEach((input) => {
+      [todoEditTitle, todoEditMemo, memoEditText, dumpEditTitle, dumpEditMemo].forEach((input) => {
         input.classList.add("fit-text");
         input.dataset.fitMin = "12";
         input.addEventListener("input", () => fitText(input, 12));
@@ -862,12 +921,18 @@
       const state = loadState();
       const openAdders = {};
       let openMemoAdder = false;
+      let openDumpAdder = false;
+      let currentView = "dump";
       let selectedDate = getTodayKey();
       let calendarMonth = new Date();
       let activeUnsubscribe = null;
       let activePinsUnsubscribe = null;
       let activePinStatusUnsubscribe = null;
       let activeMemoUnsubscribe = null;
+      let activeDumpUnsubscribe = null;
+      let draggingTodo = null;
+      let pointerDrag = null;
+      let suppressTodoClickUntil = 0;
 
       function loadState() {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -878,6 +943,7 @@
             pinnedItems: [],
             pinStatusByDate: {},
             memoItemsByDate: {},
+            dumpTodos: [],
           };
         }
         try {
@@ -888,6 +954,7 @@
               pinnedItems: parsed.pinnedItems || [],
               pinStatusByDate: parsed.pinStatusByDate || {},
               memoItemsByDate: parsed.memoItemsByDate || {},
+              dumpTodos: parsed.dumpTodos || [],
             };
           }
           if (parsed.date && Array.isArray(parsed.items)) {
@@ -896,6 +963,7 @@
               pinnedItems: [],
               pinStatusByDate: {},
               memoItemsByDate: {},
+              dumpTodos: [],
             };
           }
           return {
@@ -903,6 +971,7 @@
             pinnedItems: [],
             pinStatusByDate: {},
             memoItemsByDate: {},
+            dumpTodos: [],
           };
         } catch (error) {
           return {
@@ -910,6 +979,7 @@
             pinnedItems: [],
             pinStatusByDate: {},
             memoItemsByDate: {},
+            dumpTodos: [],
           };
         }
       }
@@ -939,6 +1009,13 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         if (options.remote) {
           syncMemoToRemote(dateKey);
+        }
+      }
+
+      function saveDumpState(options = { remote: true }) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (options.remote) {
+          syncDumpToRemote();
         }
       }
 
@@ -990,6 +1067,17 @@
         ).catch((error) => console.warn("Firestore memo save failed", error));
       }
 
+      function syncDumpToRemote() {
+        setDoc(
+          doc(db, "dumpTodos", "list"),
+          {
+            items: state.dumpTodos || [],
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        ).catch((error) => console.warn("Firestore dump save failed", error));
+      }
+
       function subscribeToDate(dateKey) {
         if (activeUnsubscribe) activeUnsubscribe();
         activeUnsubscribe = onSnapshot(doc(db, "todos", dateKey), (snapshot) => {
@@ -1035,6 +1123,17 @@
           const data = snapshot.data() || {};
           state.memoItemsByDate[dateKey] = Array.isArray(data.items) ? data.items : [];
           saveMemoState(dateKey, { remote: false });
+          render();
+        });
+      }
+
+      function subscribeDump() {
+        if (activeDumpUnsubscribe) activeDumpUnsubscribe();
+        activeDumpUnsubscribe = onSnapshot(doc(db, "dumpTodos", "list"), (snapshot) => {
+          if (!snapshot.exists()) return;
+          const data = snapshot.data() || {};
+          state.dumpTodos = Array.isArray(data.items) ? data.items : [];
+          saveDumpState({ remote: false });
           render();
         });
       }
@@ -1298,6 +1397,62 @@
         });
       }
 
+      function openDumpEditModal(item) {
+        return new Promise((resolve) => {
+          dumpEditTitle.value = item.title || "";
+          dumpEditTime.value = item.time || "";
+          dumpEditMemo.value = item.memo || "";
+          dumpEditModal.classList.remove("hidden");
+          dumpEditTitle.focus();
+          fitText(dumpEditTitle, 10);
+          fitText(dumpEditMemo, 10);
+
+          const handleClick = (event) => {
+            const action = event.target.closest("button, .modal-backdrop")?.dataset
+              ?.action;
+            if (!action) return;
+            if (action === "save") {
+              const title = dumpEditTitle.value.trim();
+              if (!title) return;
+              item.title = title;
+              item.time = dumpEditTime.value;
+              item.memo = dumpEditMemo.value.trim();
+              cleanup();
+              resolve("save");
+              return;
+            }
+            cleanup();
+            resolve("cancel");
+          };
+
+          const handleKey = (event) => {
+            if (event.key === "Escape") {
+              cleanup();
+              resolve("cancel");
+            }
+            if (event.key === "Enter") {
+              event.preventDefault();
+              const title = dumpEditTitle.value.trim();
+              if (!title) return;
+              item.title = title;
+              item.time = dumpEditTime.value;
+              item.memo = dumpEditMemo.value.trim();
+              cleanup();
+              resolve("save");
+            }
+          };
+
+          const cleanup = () => {
+            dumpEditModal.classList.add("hidden");
+            dumpEditModal.removeEventListener("click", handleClick);
+            document.removeEventListener("keydown", handleKey);
+          };
+
+          dumpEditModal.addEventListener("click", handleClick);
+          document.addEventListener("keydown", handleKey);
+        });
+      }
+
       function iconSvg(name) {
         if (name === "plus") {
           return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1Z"/></svg>`;
@@ -1316,6 +1471,12 @@
         }
         if (name === "pencil") {
           return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.6 3.9a1.5 1.5 0 0 1 2.1 0l2.4 2.4a1.5 1.5 0 0 1 0 2.1L9.3 19.2 4 20.5a1 1 0 0 1-1.2-1.2l1.3-5.3 10.5-10.1Z"/><path d="M13.5 6.9 17.1 10.5 18.9 8.7 15.3 5.1 13.5 6.9Z"/></svg>`;
+        }
+        if (name === "list") {
+          return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1Zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1Zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H7a1 1 0 0 1-1-1Z"/><path d="M4 7a1.2 1.2 0 1 1-2.4 0A1.2 1.2 0 0 1 4 7Zm0 5a1.2 1.2 0 1 1-2.4 0A1.2 1.2 0 0 1 4 12Zm0 5a1.2 1.2 0 1 1-2.4 0A1.2 1.2 0 0 1 4 17Z"/></svg>`;
+        }
+        if (name === "calendar") {
+          return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3a1 1 0 0 1 1 1v1h8V4a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 7.5v11A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-11A2.5 2.5 0 0 1 4.5 5H6V4a1 1 0 0 1 1-1Zm12.5 7h-15v8.5c0 .28.22.5.5.5h15a.5.5 0 0 0 .5-.5V10Z"/></svg>`;
         }
         if (name === "morning") {
           return `<svg class="period-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a1 1 0 0 1 1 1v1.06a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Zm6.36 2.64a1 1 0 0 1 0 1.41l-.75.75a1 1 0 1 1-1.41-1.41l.75-.75a1 1 0 0 1 1.41 0ZM5.8 8.8a1 1 0 0 1-1.41 0l-.75-.75a1 1 0 1 1 1.41-1.41l.75.75a1 1 0 0 1 0 1.41ZM12 9.5a4.5 4.5 0 0 1 4.5 4.5v1a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-1A4.5 4.5 0 0 1 12 9.5Zm8 9a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2h16Z"/></svg>`;
@@ -1378,6 +1539,18 @@
         return parts.join(" · ");
       }
 
+      function getSortOrder(item, fallback) {
+        return Number.isFinite(item.sortOrder) ? item.sortOrder : fallback;
+      }
+
+      function sortActiveTodos(a, b) {
+        return getSortOrder(a, a.createdAt || 0) - getSortOrder(b, b.createdAt || 0);
+      }
+
+      function sortDumpTodos(a, b) {
+        return getSortOrder(a, -(a.createdAt || 0)) - getSortOrder(b, -(b.createdAt || 0));
+      }
+
       function isPinVisible(pin, dateKey) {
         const createdKey = toDateKey(pin.createdAt);
         const deletedKey = toDateKey(pin.deletedAt);
@@ -1411,6 +1584,163 @@
         }
         state.pinStatusByDate[selectedDate] = nextStatus;
         savePinStatus();
+        render();
+      }
+
+      function clearDragMarkers() {
+        document.querySelectorAll(".todo.drag-over").forEach((element) => {
+          element.classList.remove("drag-over");
+        });
+      }
+
+      function setupTodoDrag(wrapper, item, type) {
+        wrapper.dataset.todoId = item.id;
+        wrapper.draggable = true;
+        wrapper.classList.add("is-draggable");
+        wrapper.setAttribute("aria-label", "Drag to reorder todo");
+
+        wrapper.addEventListener("dragstart", (event) => {
+          draggingTodo = {
+            id: item.id,
+            type,
+            dateKey: selectedDate,
+            periodId: item.periodId,
+          };
+          wrapper.classList.add("is-dragging");
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", item.id);
+        });
+
+        wrapper.addEventListener("dragend", () => {
+          draggingTodo = null;
+          wrapper.classList.remove("is-dragging");
+          clearDragMarkers();
+        });
+
+        wrapper.addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "mouse" || event.target.closest("button, input")) {
+            return;
+          }
+          pointerDrag = {
+            id: item.id,
+            type,
+            dateKey: selectedDate,
+            periodId: item.periodId,
+            list: wrapper.parentElement,
+            wrapper,
+            startX: event.clientX,
+            startY: event.clientY,
+            targetId: item.id,
+            active: false,
+          };
+          wrapper.setPointerCapture(event.pointerId);
+        });
+
+        wrapper.addEventListener("pointermove", (event) => {
+          if (!pointerDrag || pointerDrag.id !== item.id) return;
+          const deltaX = Math.abs(event.clientX - pointerDrag.startX);
+          const deltaY = Math.abs(event.clientY - pointerDrag.startY);
+          if (!pointerDrag.active && deltaX + deltaY < 10) return;
+          event.preventDefault();
+          pointerDrag.active = true;
+          draggingTodo = {
+            id: item.id,
+            type,
+            dateKey: pointerDrag.dateKey,
+            periodId: item.periodId,
+          };
+          wrapper.classList.add("is-dragging");
+          clearDragMarkers();
+
+          const target = document
+            .elementFromPoint(event.clientX, event.clientY)
+            ?.closest(".todo.is-draggable");
+          if (!target || !pointerDrag.list.contains(target)) return;
+          pointerDrag.targetId = target.dataset.todoId;
+          target.classList.add("drag-over");
+        });
+
+        const finishPointerDrag = () => {
+          if (!pointerDrag || pointerDrag.id !== item.id) return;
+          const { active, targetId } = pointerDrag;
+          if (active) {
+            suppressTodoClickUntil = Date.now() + 350;
+          }
+          pointerDrag = null;
+          wrapper.classList.remove("is-dragging");
+          clearDragMarkers();
+          if (active && targetId && targetId !== item.id) {
+            reorderTodo(type, item.id, targetId, item.periodId);
+          }
+          draggingTodo = null;
+        };
+
+        wrapper.addEventListener("pointerup", finishPointerDrag);
+        wrapper.addEventListener("pointercancel", finishPointerDrag);
+      }
+
+      function setupTodoDropList(list, type, periodId = null) {
+        list.addEventListener("dragover", (event) => {
+          if (!draggingTodo || draggingTodo.type !== type) return;
+          if (type === "dated" && draggingTodo.periodId !== periodId) return;
+          const target = event.target.closest(".todo.is-draggable");
+          if (!target || !list.contains(target)) return;
+          event.preventDefault();
+          clearDragMarkers();
+          target.classList.add("drag-over");
+          event.dataTransfer.dropEffect = "move";
+        });
+
+        list.addEventListener("drop", (event) => {
+          if (!draggingTodo || draggingTodo.type !== type) return;
+          if (type === "dated" && draggingTodo.periodId !== periodId) return;
+          const target = event.target.closest(".todo.is-draggable");
+          if (!target || !list.contains(target)) return;
+          event.preventDefault();
+          reorderTodo(type, draggingTodo.id, target.dataset.todoId, periodId);
+          draggingTodo = null;
+          clearDragMarkers();
+        });
+      }
+
+      function reorderTodo(type, sourceId, targetId, periodId) {
+        if (!sourceId || !targetId || sourceId === targetId) return;
+        if (type === "dump") {
+          reorderDumpTodo(sourceId, targetId);
+          return;
+        }
+        reorderDatedTodo(sourceId, targetId, periodId);
+      }
+
+      function reorderDatedTodo(sourceId, targetId, periodId) {
+        const dateKey = draggingTodo?.dateKey || selectedDate;
+        const items = getItemsForDate(dateKey);
+        const active = items.filter((item) => item.periodId === periodId && !item.done);
+        const ordered = active.slice().sort(sortActiveTodos);
+        const sourceIndex = ordered.findIndex((item) => item.id === sourceId);
+        const targetIndex = ordered.findIndex((item) => item.id === targetId);
+        if (sourceIndex < 0 || targetIndex < 0) return;
+        const [moved] = ordered.splice(sourceIndex, 1);
+        ordered.splice(targetIndex, 0, moved);
+        ordered.forEach((item, index) => {
+          item.sortOrder = index;
+        });
+        saveState(dateKey);
+        render();
+      }
+
+      function reorderDumpTodo(sourceId, targetId) {
+        const active = (state.dumpTodos || []).filter((item) => !item.done);
+        const ordered = active.slice().sort(sortDumpTodos);
+        const sourceIndex = ordered.findIndex((item) => item.id === sourceId);
+        const targetIndex = ordered.findIndex((item) => item.id === targetId);
+        if (sourceIndex < 0 || targetIndex < 0) return;
+        const [moved] = ordered.splice(sourceIndex, 1);
+        ordered.splice(targetIndex, 0, moved);
+        ordered.forEach((item, index) => {
+          item.sortOrder = index;
+        });
+        saveDumpState();
         render();
       }
 
@@ -1478,6 +1808,9 @@
         const wrapper = document.createElement("div");
         const isDone = isPinned ? !!pinStatus[item.pinId] : item.done;
         wrapper.className = `todo${isDone ? " checked" : ""}`;
+        if (!isPinned && !isDone) {
+          setupTodoDrag(wrapper, item, "dated");
+        }
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
@@ -1598,6 +1931,7 @@
           );
           item.periodId = nextPeriod;
           item.done = false;
+          delete item.sortOrder;
           getItemsForDate(targetDate).push(item);
           saveState(currentDate);
           if (targetDate !== currentDate) saveState(targetDate);
@@ -1636,6 +1970,7 @@
           );
           item.periodId = prevPeriod;
           item.done = false;
+          delete item.sortOrder;
           getItemsForDate(targetDate).push(item);
           saveState(currentDate);
           if (targetDate !== currentDate) saveState(targetDate);
@@ -1678,6 +2013,10 @@
         wrapper.appendChild(actions);
 
         wrapper.addEventListener("click", (event) => {
+          if (Date.now() < suppressTodoClickUntil) {
+            event.preventDefault();
+            return;
+          }
           if (
             event.target.closest("button") ||
             event.target.closest("input") ||
@@ -1702,6 +2041,213 @@
         });
 
         return wrapper;
+      }
+
+      function createDumpTodoElement(item) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `todo${item.done ? " checked" : ""}`;
+        if (!item.done) {
+          setupTodoDrag(wrapper, item, "dump");
+        }
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!item.done;
+        checkbox.addEventListener("change", () => {
+          item.done = checkbox.checked;
+          if (item.done) {
+            item.doneAt = Date.now();
+          } else {
+            delete item.doneAt;
+          }
+          saveDumpState();
+          render();
+        });
+
+        const label = document.createElement("label");
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = item.title;
+        title.classList.add("fit-text");
+        title.dataset.fitMin = "10";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = formatMeta(item);
+        if (!meta.textContent) {
+          meta.style.display = "none";
+        }
+        meta.classList.add("fit-text");
+        meta.dataset.fitMin = "10";
+
+        label.appendChild(title);
+        label.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "delete";
+        remove.setAttribute("aria-label", "Delete todo");
+        remove.textContent = "✕";
+        remove.addEventListener("click", () => {
+          state.dumpTodos = (state.dumpTodos || []).filter((entry) => entry.id !== item.id);
+          saveDumpState();
+          render();
+        });
+
+        actions.appendChild(remove);
+
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(label);
+        wrapper.appendChild(actions);
+
+        wrapper.addEventListener("click", (event) => {
+          if (Date.now() < suppressTodoClickUntil) {
+            event.preventDefault();
+            return;
+          }
+          if (
+            event.target.closest("button") ||
+            event.target.closest("input") ||
+            event.target.tagName === "LABEL"
+          ) {
+            return;
+          }
+          openDumpEditModal(item).then((action) => {
+            if (action === "save") {
+              saveDumpState();
+              render();
+            }
+          });
+        });
+
+        return wrapper;
+      }
+
+      function getDumpTodosSorted() {
+        return (state.dumpTodos || []).slice().sort((a, b) => {
+          if (!!a.done === !!b.done) {
+            if (!a.done) {
+              return sortDumpTodos(a, b);
+            }
+            const aDone = a.doneAt || a.createdAt || 0;
+            const bDone = b.doneAt || b.createdAt || 0;
+            return aDone - bDone;
+          }
+          return a.done ? 1 : -1;
+        });
+      }
+
+      function renderDumpSection() {
+        const section = document.createElement("section");
+        section.className = "section";
+
+        const header = document.createElement("header");
+        const h2 = document.createElement("h2");
+        h2.innerHTML = `${iconSvg("list")}<span class="range">TODO</span>`;
+        header.appendChild(h2);
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "add-toggle";
+        toggle.setAttribute(
+          "aria-label",
+          openDumpAdder ? "Close" : "Add dump todo"
+        );
+        toggle.innerHTML = openDumpAdder ? iconSvg("close") : iconSvg("plus");
+        toggle.addEventListener("click", () => {
+          openDumpAdder = !openDumpAdder;
+          render();
+        });
+        header.appendChild(toggle);
+
+        const adder = document.createElement("form");
+        adder.className = `adder${openDumpAdder ? "" : " hidden"}`;
+
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.placeholder = "NAME";
+        titleInput.required = true;
+        titleInput.autocomplete = "off";
+        titleInput.classList.add("fit-text");
+        titleInput.dataset.fitMin = "12";
+        titleInput.addEventListener("input", () => fitText(titleInput, 12));
+
+        const row = document.createElement("div");
+        row.className = "row";
+
+        const timeInput = document.createElement("input");
+        timeInput.type = "time";
+        timeInput.placeholder = "TIME (optional)";
+
+        const memoGroup = document.createElement("div");
+        memoGroup.className = "memo-group";
+
+        const memoInput = document.createElement("input");
+        memoInput.type = "text";
+        memoInput.placeholder = "MEMO (optional)";
+        memoInput.classList.add("fit-text");
+        memoInput.dataset.fitMin = "12";
+        memoInput.addEventListener("input", () => fitText(memoInput, 12));
+
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.setAttribute("aria-label", "Add");
+        submit.innerHTML = iconSvg("plus");
+
+        memoGroup.appendChild(memoInput);
+        memoGroup.appendChild(submit);
+
+        row.appendChild(timeInput);
+        row.appendChild(memoGroup);
+
+        adder.appendChild(titleInput);
+        adder.appendChild(row);
+
+        adder.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const title = titleInput.value.trim();
+          if (!title) return;
+
+          state.dumpTodos = state.dumpTodos || [];
+          state.dumpTodos.unshift({
+            id: createId(),
+            title,
+            time: timeInput.value,
+            memo: memoInput.value.trim(),
+            done: false,
+            createdAt: Date.now(),
+          });
+
+          titleInput.value = "";
+          timeInput.value = "";
+          memoInput.value = "";
+          titleInput.focus();
+          saveDumpState();
+          render();
+        });
+
+        const list = document.createElement("div");
+        list.className = "list";
+        setupTodoDropList(list, "dump");
+        const items = getDumpTodosSorted();
+
+        if (items.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "-";
+          list.appendChild(empty);
+        } else {
+          items.forEach((item) => list.appendChild(createDumpTodoElement(item)));
+        }
+
+        section.appendChild(header);
+        section.appendChild(adder);
+        section.appendChild(list);
+
+        return section;
       }
 
       function renderSection(period) {
@@ -1805,12 +2351,16 @@
 
         const list = document.createElement("div");
         list.className = "list";
+        setupTodoDropList(list, "dated", period.id);
 
         const pinnedItems = getPinnedForPeriod(period.id);
         const items = getItemsForDate(selectedDate)
           .filter((item) => item.periodId === period.id)
           .sort((a, b) => {
-            if (a.done === b.done) return a.createdAt - b.createdAt;
+            if (a.done === b.done) {
+              if (!a.done) return sortActiveTodos(a, b);
+              return (a.createdAt || 0) - (b.createdAt || 0);
+            }
             return a.done ? 1 : -1;
           });
 
@@ -1947,12 +2497,32 @@
         return section;
       }
 
+      function setView(view) {
+        currentView = view;
+        const isDated = currentView === "dated";
+        dateNavGroup.classList.toggle("hidden", !isDated);
+        calendarOpen.classList.toggle("is-disabled", !isDated);
+        calendarOpen.disabled = !isDated;
+        titleEl.textContent = isDated ? "TODO" : "TODO";
+        viewToggle.setAttribute(
+          "aria-label",
+          isDated ? "Open dump todo" : "Open dated todo"
+        );
+        viewToggle.innerHTML = isDated ? iconSvg("list") : iconSvg("calendar");
+        render();
+      }
+
       function render() {
         sectionsEl.innerHTML = "";
-        PERIODS.forEach((period) => {
-          sectionsEl.appendChild(renderSection(period));
-        });
-        sectionsEl.appendChild(renderDailyMemoSection());
+        if (currentView === "dump") {
+          sectionsEl.appendChild(renderDailyMemoSection());
+          sectionsEl.appendChild(renderDumpSection());
+        } else {
+          PERIODS.forEach((period) => {
+            sectionsEl.appendChild(renderSection(period));
+          });
+          sectionsEl.appendChild(renderDailyMemoSection());
+        }
         fitAllText();
       }
 
@@ -1978,6 +2548,9 @@
       dateNext.addEventListener("click", () => shiftSelectedDate(1));
       window.addEventListener("resize", fitAllText);
       titleEl.addEventListener("click", () => setSelectedDate(getTodayKey()));
+      viewToggle.addEventListener("click", () => {
+        setView(currentView === "dump" ? "dated" : "dump");
+      });
       calendarOpen.addEventListener("click", openCalendar);
       calendarPrev.addEventListener("click", () => {
         calendarMonth = new Date(
@@ -2015,7 +2588,8 @@
         setSelectedDate(getTodayKey());
       }
       subscribePins();
-      render();
+      subscribeDump();
+      setView("dump");
     </script>
   </body>
 </html>
